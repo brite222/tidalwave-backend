@@ -38,9 +38,15 @@ Authorization: Bearer <access_token>
       license: { name: 'MIT' },
     },
     servers: [
-      { url: `http://localhost:${env.PORT}/api/v1`, description: 'Local dev' },
-      { url: 'https://api.tidalwave.ng/api/v1', description: 'Production' },
-    ],
+  { 
+    url: process.env.API_URL || 'https://tidalwave-backend.onrender.com/api/v1', 
+    description: 'Production' 
+  },
+  { 
+    url: `http://localhost:${process.env.PORT || 4000}/api/v1`, 
+    description: 'Local dev' 
+  },
+],
     components: {
       securitySchemes: {
         bearerAuth: {

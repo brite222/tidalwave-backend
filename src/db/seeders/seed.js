@@ -41,12 +41,12 @@ async function run() {
   const password_hash = await bcrypt.hash('Password123!', 10);
 
   const users = [
-    ['admin@lawma.gov.ng',         'admin',      'Adunni',  'Okafor',  'Lagos State Waste Management Authority (LAWMA)'],
-    ['contractor@tidalwave.ng',    'contractor', 'Tunde',   'Bakare',  'GreenWave Disposal Co.'],
-    ['ibrahim.adeyemi@lawma.gov.ng','driver',    'Ibrahim', 'Adeyemi', 'LAWMA'],
-    ['driver2@lawma.gov.ng',       'driver',     'Chidi',   'Okonkwo', 'LAWMA'],
-    ['adebayo.okonkwo@email.com',  'citizen',    'Adebayo', 'Okonkwo', null],
-    ['citizen2@email.com',         'citizen',    'Funmi',   'Adeleke', null],
+    ['admin@lawma.gov.ng',          'admin',      'Adunni',  'Okafor',  'Lagos State Waste Management Authority (LAWMA)'],
+    ['contractor@tidalwave.ng',     'contractor', 'Tunde',   'Bakare',  'GreenWave Disposal Co.'],
+    ['ibrahim.adeyemi@lawma.gov.ng','driver',     'Ibrahim', 'Adeyemi', 'LAWMA'],
+    ['driver2@lawma.gov.ng',        'driver',     'Chidi',   'Okonkwo', 'LAWMA'],
+    ['adebayo.okonkwo@email.com',   'citizen',    'Adebayo', 'Okonkwo', null],
+    ['citizen2@email.com',          'citizen',    'Funmi',   'Adeleke', null],
   ];
 
   const userIds = {};
@@ -82,22 +82,29 @@ async function run() {
       fill >= 61  ? 'warning'  : 'normal';
 
     await db.query(
-      `INSERT INTO bins (code, zone, location, address, fill_level, status, assigned_contractor_id)
-       VALUES ($1,$2, ST_SetSRID(ST_MakePoint($3,$4),4326)::geography, $5,$6,$7,$8)
+      `INSERT INTO bins (code, zone, lat, lng, address, fill_level, status, assigned_contractor_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        ON CONFLICT (code) DO NOTHING`,
-      [code, zone, lng, lat, address, fill, status, contractorId]
+      [code, zone, lat, lng, address, fill, status, contractorId]
     );
   }
   console.log(`✓ Seeded ${LAGOS_BINS.length} bins across Lagos`);
 
-  // === REWARDS ===
+  // === REWARDS (FIXED with explicit type casts) ===
   for (const [name, category, points, description] of REWARDS) {
-    await db.query(
-      `INSERT INTO rewards_catalog (name, category, points_required, description, is_active)
-       SELECT $1, $2, $3, $4, true
-       WHERE NOT EXISTS (SELECT 1 FROM rewards_catalog WHERE name=$1)`,
-      [name, category, points, description]
+    // Check if reward already exists
+    const { rows: existing } = await db.query(
+      `SELECT id FROM rewards_catalog WHERE name = $1`,
+      [name]
     );
+
+    if (existing.length === 0) {
+      await db.query(
+        `INSERT INTO rewards_catalog (name, category, points_required, description, is_active)
+         VALUES ($1, $2, $3, $4, true)`,
+        [name, category, points, description]
+      );
+    }
   }
   console.log(`✓ Seeded ${REWARDS.length} rewards`);
 
@@ -125,14 +132,19 @@ async function run() {
     `SELECT id, code FROM bins WHERE status='critical' LIMIT 2`
   );
   for (const b of criticalBins) {
-    await db.query(
-      `INSERT INTO alerts (bin_id, type, severity, message)
-       SELECT $1, 'fill_threshold', 'critical', $2
-       WHERE NOT EXISTS (
-         SELECT 1 FROM alerts WHERE bin_id=$1 AND resolved=false
-       )`,
-      [b.id, `Bin ${b.code} requires immediate attention`]
+    // Check if alert already exists
+    const { rows: existingAlert } = await db.query(
+      `SELECT id FROM alerts WHERE bin_id = $1 AND resolved = false`,
+      [b.id]
     );
+
+    if (existingAlert.length === 0) {
+      await db.query(
+        `INSERT INTO alerts (bin_id, type, severity, message)
+         VALUES ($1, 'fill_threshold', 'critical', $2)`,
+        [b.id, `Bin ${b.code} requires immediate attention`]
+      );
+    }
   }
   console.log(`✓ Seeded ${criticalBins.length} alerts`);
 

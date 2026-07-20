@@ -5,7 +5,7 @@ const ApiError = require('../../utils/apiError');
 exports.generateRoute = async ({ driver_id, zone, max_bins = 15 }) => {
   const { rows: bins } = await db.query(
     `SELECT id, code, fill_level, status,
-            ST_Y(location::geometry) AS lat, ST_X(location::geometry) AS lng
+            lat::float AS lat, lng::float AS lng
      FROM bins
      WHERE zone=$1 AND status IN ('warning','critical','overflow')
      ORDER BY 
@@ -62,7 +62,7 @@ exports.getDriverRoutes = async (driver_id) => {
           'bin_id', rb.bin_id, 'sequence', rb.sequence,
           'picked_up_at', rb.picked_up_at, 'code', b.code,
           'fill_level', b.fill_level, 'status', b.status,
-          'lat', ST_Y(b.location::geometry), 'lng', ST_X(b.location::geometry)
+          'lat', b.lat::float, 'lng', b.lng::float
         ) ORDER BY rb.sequence)
         FROM route_bins rb JOIN bins b ON b.id=rb.bin_id
         WHERE rb.route_id=r.id) AS bins

@@ -321,6 +321,7 @@ Authorization: Bearer <access_token>
     security: [{ bearerAuth: [] }],
     tags: [
       { name: 'Auth', description: 'Registration, login, password management' },
+      { name: 'Users', description: 'User profile' },
       { name: 'Bins', description: 'Smart bin CRUD & IoT telemetry' },
       { name: 'Routes', description: 'Pickup route generation & driver ops' },
       { name: 'Alerts', description: 'Threshold alerts & resolutions' },

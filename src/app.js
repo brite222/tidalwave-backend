@@ -31,6 +31,7 @@ app.get('/docs.json', (_, res) => res.json(swaggerSpec));
 
 // API routes
 app.use('/api/v1/auth', require('./modules/auth/auth.routes'));
+app.use('/api/v1/users', require('./modules/users/users.routes'));
 app.use('/api/v1/bins', require('./modules/bins/bins.routes'));
 app.use('/api/v1/routes', require('./modules/routes/routes.routes'));
 app.use('/api/v1/alerts', require('./modules/alerts/alerts.routes'));

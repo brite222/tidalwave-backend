@@ -127,6 +127,20 @@ Authorization: Bearer <access_token>
             password: { type: 'string', example: 'StrongP@ss123' },
           },
         },
+        UpdateProfileRequest: {
+          type: 'object',
+          properties: {
+            first_name: { type: 'string', example: 'Ibrahim' },
+            last_name: { type: 'string', example: 'Adeyemi' },
+            phone: { type: 'string', example: '+234 803 123 4567' },
+            address: { type: 'string', example: '15 Admiralty Way, Lekki Phase 1' },
+            profile_photo_url: { type: 'string', format: 'uri' },
+            agency: { type: 'string', example: 'Lagos State Waste Management Authority (LAWMA)' },
+            vehicle_number: { type: 'string', example: 'TW-001' },
+            drivers_license: { type: 'string', example: 'LAG-DL-2024-5678' },
+            assigned_area: { type: 'string', example: 'Victoria Island' },
+          },
+        },
         AuthTokens: {
           type: 'object',
           properties: {

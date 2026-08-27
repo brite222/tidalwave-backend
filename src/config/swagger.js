@@ -295,15 +295,15 @@ Authorization: Bearer <access_token>
           type: 'object',
           required: ['code'],
           properties: {
-            code: { type: 'string', example: 'TW-23456', description: 'Smart Bin ID from the QR label' },
+            code: { type: 'string', example: 'VI-001', description: 'Smart Bin ID from the QR label' },
           },
         },
         BinSummary: {
           type: 'object',
           properties: {
             id: { type: 'string', format: 'uuid' },
-            code: { type: 'string', example: 'TW-23456' },
-            zone: { type: 'string', example: 'Lagos Island — Zone 4B' },
+            code: { type: 'string', example: 'VI-001' },
+            zone: { type: 'string', example: 'Victoria Island' },
             address: { type: 'string', nullable: true },
             status: { type: 'string', enum: ['normal', 'warning', 'critical', 'overflow'] },
             next_pickup_at: { type: 'string', format: 'date-time', nullable: true },

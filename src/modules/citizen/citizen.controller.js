@@ -42,3 +42,31 @@ exports.claim = async (req, res, next) => {
     success(res, { status: 201, message: 'Reward claimed', data });
   } catch (e) { next(e); }
 };
+
+exports.verifyBin = async (req, res, next) => {
+  try {
+    const data = await svc.verifyBin({ user_id: req.user.id, code: req.body.code });
+    success(res, { message: 'Smart bin found', data });
+  } catch (e) { next(e); }
+};
+
+exports.linkBin = async (req, res, next) => {
+  try {
+    const data = await svc.linkBin({ user_id: req.user.id, code: req.body.code });
+    const io = req.app.get('io');
+    if (io) io.to(`user:${req.user.id}`).emit('bin:linked', data);
+    success(res, { status: 201, message: 'Bin linked', data });
+  } catch (e) { next(e); }
+};
+
+exports.myBins = async (req, res, next) => {
+  try { success(res, { data: await svc.listMyBins(req.user.id) }); }
+  catch (e) { next(e); }
+};
+
+exports.unlinkBin = async (req, res, next) => {
+  try {
+    await svc.unlinkBin({ user_id: req.user.id, link_id: req.params.linkId });
+    success(res, { message: 'Bin unlinked' });
+  } catch (e) { next(e); }
+};

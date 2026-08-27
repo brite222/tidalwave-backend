@@ -289,6 +289,54 @@ Authorization: Bearer <access_token>
             balance: { type: 'integer', example: 1250 },
           },
         },
+
+        // === SMART BIN LINKING (citizen onboarding) ===
+        LinkBinRequest: {
+          type: 'object',
+          required: ['code'],
+          properties: {
+            code: { type: 'string', example: 'TW-23456', description: 'Smart Bin ID from the QR label' },
+          },
+        },
+        BinSummary: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            code: { type: 'string', example: 'TW-23456' },
+            zone: { type: 'string', example: 'Lagos Island — Zone 4B' },
+            address: { type: 'string', nullable: true },
+            status: { type: 'string', enum: ['normal', 'warning', 'critical', 'overflow'] },
+            next_pickup_at: { type: 'string', format: 'date-time', nullable: true },
+          },
+        },
+        BinVerification: {
+          type: 'object',
+          properties: {
+            bin: { $ref: '#/components/schemas/BinSummary' },
+            already_linked: { type: 'boolean', example: false },
+            household_size: { type: 'integer', example: 0, description: 'Accounts already linked to this bin' },
+          },
+        },
+        BinLinkResult: {
+          type: 'object',
+          properties: {
+            link_id: { type: 'string', format: 'uuid' },
+            status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+            linked_at: { type: 'string', format: 'date-time' },
+            linked_to: { type: 'string', example: 'Asabi Balogun' },
+            points_earned: { type: 'integer', example: 100 },
+            bin: { $ref: '#/components/schemas/BinSummary' },
+          },
+        },
+        LinkedBin: {
+          type: 'object',
+          properties: {
+            link_id: { type: 'string', format: 'uuid' },
+            status: { type: 'string', enum: ['active', 'inactive'] },
+            linked_at: { type: 'string', format: 'date-time' },
+            bin: { $ref: '#/components/schemas/BinSummary' },
+          },
+        },
         Reward: {
           type: 'object',
           properties: {

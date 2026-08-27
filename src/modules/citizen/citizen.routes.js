@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const ctrl = require('./citizen.controller');
+const validate = require('../../middleware/validate');
 const { requireAuth, requireRole } = require('../../middleware/auth');
+const s = require('./citizen.schema');
 
 router.use(requireAuth, requireRole('citizen'));
 
@@ -160,5 +162,106 @@ router.get('/rewards/history', ctrl.history);
  *       400: { description: Insufficient points or invalid reward }
  */
 router.post('/rewards/claim', ctrl.claim);
+
+/**
+ * @openapi
+ * /citizen/bins/verify:
+ *   post:
+ *     tags: [Citizen]
+ *     summary: Verify a Smart Bin ID before linking
+ *     description: |
+ *       Onboarding step after registration ("Link Your Smart Bin"). Checks that the
+ *       entered bin code exists in the registry. Does not create a link.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/LinkBinRequest' }
+ *     responses:
+ *       200:
+ *         description: Smart bin found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data: { $ref: '#/components/schemas/BinVerification' }
+ *       404: { description: No smart bin matches that ID }
+ *       422: { $ref: '#/components/responses/ValidationError' }
+ */
+router.post('/bins/verify', validate(s.verifyBinSchema), ctrl.verifyBin);
+
+/**
+ * @openapi
+ * /citizen/bins/link:
+ *   post:
+ *     tags: [Citizen]
+ *     summary: Link a Smart Bin to the citizen's account
+ *     description: |
+ *       Completes onboarding. Creates the citizen↔bin link, awards a one-time
+ *       welcome bonus on the first linked bin, and emits `bin:linked` over
+ *       WebSocket to `user:<id>`.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/LinkBinRequest' }
+ *     responses:
+ *       201:
+ *         description: Bin linked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data: { $ref: '#/components/schemas/BinLinkResult' }
+ *       404: { description: No smart bin matches that ID }
+ *       409: { description: Bin already linked to this account }
+ *       422: { $ref: '#/components/responses/ValidationError' }
+ */
+router.post('/bins/link', validate(s.linkBinSchema), ctrl.linkBin);
+
+/**
+ * @openapi
+ * /citizen/bins:
+ *   get:
+ *     tags: [Citizen]
+ *     summary: List Smart Bins linked to the citizen
+ *     responses:
+ *       200:
+ *         description: Linked bins
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items: { $ref: '#/components/schemas/LinkedBin' }
+ */
+router.get('/bins', ctrl.myBins);
+
+/**
+ * @openapi
+ * /citizen/bins/{linkId}:
+ *   delete:
+ *     tags: [Citizen]
+ *     summary: Unlink a Smart Bin from the citizen's account
+ *     parameters:
+ *       - in: path
+ *         name: linkId
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200: { description: Bin unlinked }
+ *       404: { description: Bin link not found }
+ */
+router.delete('/bins/:linkId', ctrl.unlinkBin);
 
 module.exports = router;

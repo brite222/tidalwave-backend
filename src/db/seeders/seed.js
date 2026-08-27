@@ -90,6 +90,34 @@ async function run() {
   }
   console.log(`✓ Seeded ${LAGOS_BINS.length} bins across Lagos`);
 
+  // === DEMO SMART BIN LINK (citizen onboarding) ===
+  const { rows: demoBin } = await db.query(
+    `SELECT id, code FROM bins WHERE code='LK-001' LIMIT 1`
+  );
+  if (demoBin.length) {
+    await db.query(
+      `UPDATE bins SET next_pickup_at = (CURRENT_DATE + INTERVAL '1 day' + TIME '08:00')
+       WHERE id=$1 AND next_pickup_at IS NULL`,
+      [demoBin[0].id]
+    );
+    const { rows: linkRow } = await db.query(
+      `INSERT INTO bin_links (bin_id, user_id) VALUES ($1,$2)
+       ON CONFLICT (bin_id, user_id) DO NOTHING
+       RETURNING id`,
+      [demoBin[0].id, citizenId]
+    );
+    if (linkRow.length) {
+      await db.query(
+        `INSERT INTO citizen_credits (user_id, points, reason, reference_id)
+         VALUES ($1, 100, 'bin_link', $2)`,
+        [citizenId, linkRow[0].id]
+      );
+      console.log(`✓ Linked bin ${demoBin[0].code} to citizen (+100 pts welcome bonus)`);
+    } else {
+      console.log(`✓ Demo bin link already exists (skipped)`);
+    }
+  }
+
   // === REWARDS (FIXED with explicit type casts) ===
   for (const [name, category, points, description] of REWARDS) {
     // Check if reward already exists
